@@ -70,9 +70,8 @@ std::ostream & operator <<(std::ostream & os, const CPUSampleDelta & sampleDelta
     }
 
     const auto not_idle = sampleDelta.m_duration - sampleDelta.m_idle_duration;
-    const auto now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-    const auto localtm = std::localtime(&now); // assume thread-safe localtime implementation
-    os << std::put_time(localtm, "[%Y-%m-%d %H:%M:%S %z] ") << "CPU usage " << (not_idle.count() * 100.0 / sampleDelta.m_duration.count()) << "%";
+    
+    os << "CPU usage " << (not_idle.count() * 100.0 / sampleDelta.m_duration.count()) << "%";
     return os;
 }
 

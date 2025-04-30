@@ -10,6 +10,8 @@ add_executable(rmm rmm.cpp
     PollingTimer.cpp
     CPUSampler.h
     CPUSampler.cpp
+    MemAvailable.h
+    MemAvailable.cpp
 )
 
 target_link_libraries(rmm PRIVATE Boost::asio)
