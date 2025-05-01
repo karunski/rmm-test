@@ -74,6 +74,7 @@ try
     rmm::ScriptDropboxMonitor scriptMonitor{ioContext, scriptDir};
     rmm::ScriptRunner scriptRunner{ioContext, scriptOutputDir};
 
+    // Define what to do when a script is added to the dropbox
     scriptMonitor.asyncWaitForScriptAdded([&scriptRunner](const auto & script, const auto & ec)
     {
         if (ec)
@@ -82,9 +83,10 @@ try
             return;
         }
 
-        scriptRunner.runScriptAsync(script);
+        scriptRunner.runScriptAsync(script); // run it.
     });
 
+    // Define what to do when a script completes
     scriptRunner.connectCompletionSlot([](const auto & script, int exit_code, const auto & ec)
     {
         if (ec)
@@ -96,17 +98,17 @@ try
         std::cout << "Script completed: " << script << ", exit code: " << exit_code << "\n";
     });
 
-    // Wait for events (timer expiring, inotify events, etc.)
+    // Enter the event loop and wait for events (timer expiring, inotify events, process completions)
     ioContext.run();
     return EXIT_SUCCESS;
 }
 catch (const std::exception & ex) // Top-level exception backstop
 {
-    std::cerr << "Unhandled exception: " << ex.what() << std::endl;
+    std::cerr << "Unhandled exception: " << ex.what() << "\n";
     return EXIT_FAILURE;
 }
 catch (...) // catch-all... maybe catch SEH here on windows...
 {
-    std::cerr << "Unhandled unknown exception" << std::endl;
+    std::cerr << "Unhandled unknown exception\n";
     return EXIT_FAILURE;
 }
