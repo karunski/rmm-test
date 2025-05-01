@@ -1,6 +1,7 @@
 #include "PollingTimer.h"
 #include "CPUSampler.h"
 #include "MemAvailable.h"
+#include "ScriptMonitor.h"
 
 #include <iostream>
 #include <boost/asio/io_context.hpp>
@@ -62,6 +63,22 @@ try
         mem_stats_out.flush(); // force line to be written immediately
     });
 
+    const auto scriptDir = binaryPath.parent_path().parent_path() / "var" / "scripts";
+    std::filesystem::create_directories(scriptDir);
+    std::cout << "Script directory: " << scriptDir << "\n";
+
+    rmm::ScriptDropboxMonitor scriptMonitor{ioContext, scriptDir};
+    scriptMonitor.asyncWaitForScriptAdded([](const auto & script, const auto & ec)
+    {
+        if (ec)
+        {
+            std::cerr << "Error waiting for script: " << ec.message() << "\n";
+            return;
+        }
+
+        std::cout << "Script added: " << script << "\n";
+    });
+    
     // Wait for events (timer expiring, inotify events, etc.)
     ioContext.run();
     return EXIT_SUCCESS;

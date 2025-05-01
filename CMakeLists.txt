@@ -12,6 +12,8 @@ add_executable(rmm rmm.cpp
     CPUSampler.cpp
     MemAvailable.h
     MemAvailable.cpp
+    ScriptMonitor.h
+    ScriptMonitor.cpp
 )
 
 target_link_libraries(rmm PRIVATE Boost::asio)
