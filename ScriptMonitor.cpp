@@ -20,7 +20,9 @@ ScriptDropboxMonitor::ScriptDropboxMonitor(boost::asio::io_context & ioc, std::f
     // Just watch for files renamed into the dropbox directory.  
     // My thinking here is that the "drop" operation would be defined as a copy+rename
     // sequence.... potentially via some other "drop" sub-command implmented as a mode of this program
-    const auto watchDescriptor = inotify_add_watch(dropboxFd, m_dropboxPath.c_str(), IN_MOVED_TO);
+    // For simplicity I also watch for the CLOSE_WRITE; which is typically observed at the end
+    // of a file copy operation.
+    const auto watchDescriptor = inotify_add_watch(dropboxFd, m_dropboxPath.c_str(), IN_MOVED_TO | IN_CLOSE_WRITE);
     if (watchDescriptor < 0)
     {
         throw std::system_error{errno, std::system_category(), "Failed to add watch"};
@@ -70,7 +72,7 @@ void ScriptDropboxMonitor::initAsyncWait()
             }
 
             const auto current_event = reinterpret_cast<const ::inotify_event *>(m_eventBuffer.data());
-            if (current_event->mask & IN_MOVED_TO)
+            if (current_event->mask & (IN_MOVED_TO|IN_CLOSE_WRITE))
             {
                 // The event is a file being moved into (or renamed inside) the dropbox directory
                 // The actual length of the filename provided appears to be bogus.  It's null terminated, though
