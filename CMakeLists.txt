@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.28)
 project(rmm-test LANGUAGES CXX)
 set (CMAKE_CXX_STANDARD 17)
 
-find_package(Boost 1.88.0 REQUIRED COMPONENTS asio)
+find_package(Boost 1.88.0 REQUIRED COMPONENTS asio process)
 
 add_executable(rmm rmm.cpp
     PollingTimer.h
@@ -14,6 +14,8 @@ add_executable(rmm rmm.cpp
     MemAvailable.cpp
     ScriptMonitor.h
     ScriptMonitor.cpp
+    ScriptRunner.h
+    ScriptRunner.cpp
 )
 
-target_link_libraries(rmm PRIVATE Boost::asio)
+target_link_libraries(rmm PRIVATE Boost::asio Boost::process)

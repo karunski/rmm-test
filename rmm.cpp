@@ -2,6 +2,7 @@
 #include "CPUSampler.h"
 #include "MemAvailable.h"
 #include "ScriptMonitor.h"
+#include "ScriptRunner.h"
 
 #include <iostream>
 #include <boost/asio/io_context.hpp>
@@ -64,11 +65,16 @@ try
     });
 
     const auto scriptDir = binaryPath.parent_path().parent_path() / "var" / "scripts";
+    const auto scriptOutputDir = binaryPath.parent_path().parent_path() / "var" / "script_output";
     std::filesystem::create_directories(scriptDir);
+    std::filesystem::create_directories(scriptOutputDir);
     std::cout << "Script directory: " << scriptDir << "\n";
+    std::cout << "Script output directory: " << scriptOutputDir << "\n";
 
     rmm::ScriptDropboxMonitor scriptMonitor{ioContext, scriptDir};
-    scriptMonitor.asyncWaitForScriptAdded([](const auto & script, const auto & ec)
+    rmm::ScriptRunner scriptRunner{ioContext, scriptOutputDir};
+
+    scriptMonitor.asyncWaitForScriptAdded([&scriptRunner](const auto & script, const auto & ec)
     {
         if (ec)
         {
@@ -76,20 +82,31 @@ try
             return;
         }
 
-        std::cout << "Script added: " << script << "\n";
+        scriptRunner.runScriptAsync(script);
     });
-    
+
+    scriptRunner.connectCompletionSlot([](const auto & script, int exit_code, const auto & ec)
+    {
+        if (ec)
+        {
+            std::cerr << "Error running script " << script << ": " << ec.message() << "\n";
+            return;
+        }
+
+        std::cout << "Script completed: " << script << ", exit code: " << exit_code << "\n";
+    });
+
     // Wait for events (timer expiring, inotify events, etc.)
     ioContext.run();
     return EXIT_SUCCESS;
 }
 catch (const std::exception & ex) // Top-level exception backstop
 {
-    std::cerr << "Exception: " << ex.what() << std::endl;
+    std::cerr << "Unhandled exception: " << ex.what() << std::endl;
     return EXIT_FAILURE;
 }
-catch (...)
+catch (...) // catch-all... maybe catch SEH here on windows...
 {
-    std::cerr << "Unknown exception" << std::endl;
+    std::cerr << "Unhandled unknown exception" << std::endl;
     return EXIT_FAILURE;
 }

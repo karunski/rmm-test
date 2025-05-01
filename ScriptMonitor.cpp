@@ -73,7 +73,8 @@ void ScriptDropboxMonitor::initAsyncWait()
             if (current_event->mask & IN_MOVED_TO)
             {
                 // The event is a file being moved into (or renamed inside) the dropbox directory
-                std::filesystem::path scriptPath{m_dropboxPath / std::string{current_event->name, current_event->len}};
+                // The actual length of the filename provided appears to be bogus.  It's null terminated, though
+                const auto scriptPath = m_dropboxPath / current_event->name;
                 completeAsyncWait(scriptPath, {});
             }
             else
